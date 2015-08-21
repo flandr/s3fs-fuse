@@ -21,3 +21,11 @@ if [ ! -e "${S3PROXY_BINARY}" ]; then
             --quiet -O "${S3PROXY_BINARY}"
     chmod +x "${S3PROXY_BINARY}"
 fi
+
+CHAOSPROXY_VERSION="1.0.0"
+CHAOSPROXY_BINARY="chaos-http-proxy-${CHAOSPROXY_VERSION}"
+if [ ! -e "${CHAOSPROXY_BINARY}" ]; then
+    wget "https://github.com/bouncestorage/chaos-http-proxy/releases/download/chaos-http-proxy-${CHAOSPROXY_VERSION}/chaos-http-proxy" \
+            --quiet -O "${CHAOSPROXY_BINARY}"
+    chmod +x "${CHAOSPROXY_BINARY}"
+fi

@@ -30,6 +30,7 @@ function retry {
 
 function exit_handler {
     kill $S3PROXY_PID
+    kill $CHAOSPROXY_PID
     retry 30 fusermount -u $TEST_BUCKET_MOUNT_POINT_1
 }
 trap exit_handler EXIT
@@ -49,6 +50,27 @@ do
 done
 
 S3PROXY_PID=$(netstat -lpnt | grep :8080 | awk '{ print $7 }' | sed -u 's|/java||')
+
+CP_PORT=8081
+stdbuf -oL -eL java -jar "$CHAOSPROXY_BINARY" --port ${CP_PORT} \
+    --properties chaosproxy.conf | stdbuf -oL -eL sed -u "s/^/chaosproxy: /" &
+
+# wait for Chaos Proxy to start
+for i in $(seq 30);
+do
+    if exec 3<>"/dev/tcp/localhost/${CP_PORT}";
+    then
+        exec 3<&-  # Close for read
+        exec 3>&-  # Close for write
+        break
+    fi
+    sleep 1
+done
+
+CHAOSPROXY_PID=$(netstat -lpnt | grep :${CP_PORT} | awk '{ print $7 }' | sed -u 's|/java||')
+
+# Force libcurl to use the proxy
+export http_proxy=http://127.0.0.1:${CP_PORT}
 
 # Mount the bucket
 if [ ! -d $TEST_BUCKET_MOUNT_POINT_1 ]
